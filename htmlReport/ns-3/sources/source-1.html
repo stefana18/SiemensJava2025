@@ -1,0 +1,224 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ItemService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.siemens.internship.service</a>
+</div>
+
+<h1>Coverage Summary for Class: ItemService (com.siemens.internship.service)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ItemService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (9/9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    50%
+  </span>
+  <span class="absValue">
+    (1/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    76%
+  </span>
+  <span class="absValue">
+    (19/25)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.siemens.internship.service;
+&nbsp;
+&nbsp;import com.siemens.internship.model.Item;
+&nbsp;import com.siemens.internship.repository.ItemRepository;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.scheduling.annotation.Async;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Objects;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.concurrent.*;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;public class ItemService {</b>
+&nbsp;    @Autowired
+&nbsp;    private ItemRepository itemRepository;
+<b class="fc">&nbsp;    private static final ExecutorService executor = Executors.newFixedThreadPool(10);</b>
+&nbsp;
+&nbsp;    public List&lt;Item&gt; findAll() {
+<b class="fc">&nbsp;        return itemRepository.findAll();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Optional&lt;Item&gt; findById(Long id) {
+<b class="fc">&nbsp;        return itemRepository.findById(id);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Item save(Item item) {
+<b class="fc">&nbsp;        return itemRepository.save(item);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void deleteById(Long id) {
+<b class="fc">&nbsp;        itemRepository.deleteById(id);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Your Tasks
+&nbsp;     * Identify all concurrency and asynchronous programming issues in the code
+&nbsp;     * Fix the implementation to ensure:
+&nbsp;     * All items are properly processed before the CompletableFuture completes
+&nbsp;     * Thread safety for all shared state
+&nbsp;     * Proper error handling and propagation
+&nbsp;     * Efficient use of system resources
+&nbsp;     * Correct use of Spring&#39;s @Async annotation
+&nbsp;     * Add appropriate comments explaining your changes and why they fix the issues
+&nbsp;     * Write a brief explanation of what was wrong with the original implementation
+&nbsp;     *
+&nbsp;     * Hints
+&nbsp;     * Consider how CompletableFuture composition can help coordinate multiple async operations
+&nbsp;     * Think about appropriate thread-safe collections
+&nbsp;     * Examine how errors are handled and propagated
+&nbsp;     * Consider the interaction between Spring&#39;s @Async and CompletableFuture
+&nbsp;     */
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Asynchronously processes all items in the system
+&nbsp;     * This method retrieves all item Ids from the database,
+&nbsp;     * - For each id, it creates an asynchronous task to retrieve the item, mark it as processed and save it back to the database
+&nbsp;     * - Waits for all the tasks to be complete
+&nbsp;     * - Collects and returns all successfully processed items
+&nbsp;     * @return CompletableFuture containing list of processed items
+&nbsp;     */
+&nbsp;    @Async
+&nbsp;    public CompletableFuture&lt;List&lt;Item&gt;&gt; processItemsAsync() {
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Long&gt; itemIds = itemRepository.findAllIds();</b>
+&nbsp;
+&nbsp;        // Create a CompletableFuture for each item-processing task
+<b class="fc">&nbsp;        List&lt;CompletableFuture&lt;Item&gt;&gt; futures = itemIds.stream()</b>
+<b class="fc">&nbsp;                .map(id -&gt; CompletableFuture.supplyAsync(() -&gt; {</b>
+&nbsp;                    try {
+&nbsp;                        // Optional: simulate delay to mock processing time
+<b class="fc">&nbsp;                        Thread.sleep(100);</b>
+&nbsp;
+&nbsp;                        // Retrieve and update an item
+<b class="fc">&nbsp;                        Optional&lt;Item&gt; optionalItem = itemRepository.findById(id);</b>
+<b class="pc">&nbsp;                        if (optionalItem.isPresent()) {</b>
+<b class="fc">&nbsp;                            Item item = optionalItem.get();</b>
+<b class="fc">&nbsp;                            item.setStatus(&quot;PROCESSED&quot;);</b>
+<b class="fc">&nbsp;                            return itemRepository.save(item);</b>
+&nbsp;                        }
+<b class="nc">&nbsp;                    } catch (InterruptedException e) {</b>
+<b class="nc">&nbsp;                        Thread.currentThread().interrupt(); // Restore interrupted flag</b>
+<b class="nc">&nbsp;                        System.err.println(e.getMessage());</b>
+<b class="nc">&nbsp;                    } catch (Exception e) {</b>
+<b class="nc">&nbsp;                        System.err.println(e.getMessage());</b>
+&nbsp;                    }
+<b class="nc">&nbsp;                    return null;</b>
+<b class="fc">&nbsp;                }, executor)).toList();</b>
+&nbsp;
+&nbsp;        // Wait for all async operations to complete
+<b class="fc">&nbsp;        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))</b>
+<b class="fc">&nbsp;                .thenApply(voided -&gt;</b>
+&nbsp;                        // Filter out nulls and collect only successfully processed items
+<b class="fc">&nbsp;                futures.stream().map(CompletableFuture::join).filter(Objects::nonNull).collect(Collectors.toList()));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * What was wrong with the first implementation:
+&nbsp;     * - The method returned a mutable list(processedItems) immediately, before any item was actually processed
+&nbsp;     * - The use of shared mutable state(processedItems and processedCount) was unsafe in a multithreaded context
+&nbsp;     * - Asynchronous tasks were created but not tracked, so it was impossible to know when they had all completed
+&nbsp;     */
+&nbsp;
+&nbsp;}
+&nbsp;
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-05-10 19:44</div>
+</div>
+</body>
+</html>

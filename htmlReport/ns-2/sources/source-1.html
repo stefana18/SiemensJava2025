@@ -1,0 +1,201 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ItemController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.siemens.internship.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: ItemController (com.siemens.internship.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ItemController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    62.5%
+  </span>
+  <span class="absValue">
+    (5/8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    80%
+  </span>
+  <span class="absValue">
+    (20/25)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.siemens.internship.controller;
+&nbsp;
+&nbsp;import com.siemens.internship.model.Item;
+&nbsp;import com.siemens.internship.service.ItemService;
+&nbsp;import jakarta.validation.Valid;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.http.HttpStatus;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.validation.BindingResult;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.concurrent.CompletableFuture;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/api/items&quot;)
+<b class="fc">&nbsp;public class ItemController {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private ItemService itemService;
+&nbsp;
+&nbsp;    // Fetch all items
+&nbsp;    @GetMapping
+&nbsp;    public ResponseEntity&lt;List&lt;Item&gt;&gt; getAllItems() {
+<b class="fc">&nbsp;        return ResponseEntity.ok(itemService.findAll());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Create a new item and validate input
+&nbsp;    @PostMapping
+&nbsp;    public ResponseEntity&lt;?&gt; createItem(@Valid @RequestBody Item item, BindingResult result) {
+<b class="fc">&nbsp;        if (result.hasErrors()) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.badRequest().body(result.getAllErrors());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Item savedItem = itemService.save(item);</b>
+<b class="fc">&nbsp;        return new ResponseEntity&lt;&gt;(savedItem, HttpStatus.CREATED);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Fetch an item by id
+&nbsp;    @GetMapping(&quot;/{id}&quot;)
+&nbsp;    public ResponseEntity&lt;Item&gt; getItemById(@PathVariable Long id) {
+<b class="fc">&nbsp;        return itemService.findById(id)</b>
+<b class="fc">&nbsp;                .map(ResponseEntity::ok)</b>
+<b class="fc">&nbsp;                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Update an item by id
+&nbsp;    @PutMapping(&quot;/{id}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; updateItem(@PathVariable Long id, @Valid @RequestBody Item item, BindingResult result) {
+<b class="pc">&nbsp;        if(result.hasErrors()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(result.getAllErrors());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Optional&lt;Item&gt; existingItem = itemService.findById(id);</b>
+<b class="pc">&nbsp;        if (existingItem.isPresent()) {</b>
+<b class="fc">&nbsp;            item.setId(id);</b>
+<b class="fc">&nbsp;            Item updatedItem = itemService.save(item);</b>
+<b class="fc">&nbsp;            return ResponseEntity.ok(updatedItem);</b>
+&nbsp;        } else {
+<b class="nc">&nbsp;            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Delete an item by id
+&nbsp;    @DeleteMapping(&quot;/{id}&quot;)
+&nbsp;    public ResponseEntity&lt;Void&gt; deleteItem(@PathVariable Long id) {
+<b class="pc">&nbsp;        if(itemService.findById(id).isPresent()) {</b>
+<b class="fc">&nbsp;            itemService.deleteById(id);</b>
+<b class="fc">&nbsp;            return ResponseEntity.noContent().build();</b>
+&nbsp;        }
+&nbsp;        else {
+<b class="nc">&nbsp;            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Process all items asynchronously
+&nbsp;    @GetMapping(&quot;/process&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;Item&gt;&gt; processItems() {
+&nbsp;        try {
+<b class="fc">&nbsp;            List&lt;Item&gt; result = itemService.processItemsAsync().get(); // blocant dar util pentru test</b>
+<b class="fc">&nbsp;            return ResponseEntity.ok(result);</b>
+<b class="nc">&nbsp;        } catch (Exception e) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-05-10 19:44</div>
+</div>
+</body>
+</html>
